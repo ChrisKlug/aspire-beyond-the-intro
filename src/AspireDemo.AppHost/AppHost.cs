@@ -9,12 +9,15 @@ builder.AddEnterpriseEnvironment("demo")
 
 var password = builder.AddParameter("neo4j-password");
 
-var neo4j = builder.AddNeo4j("neo4j", password.Resource)
-    .WithVolumeStorage("data")
-    .WithLifetime(ContainerLifetime.Persistent)
-    .WithSeedDatabaseCommand();
+var neo4j = builder.AddNeo4j("neo4j", password: password.Resource)
+                    .WithVolumeStorage("data")
+                    .WithLifetime(ContainerLifetime.Persistent)
+                    .WithSeedDatabaseCommand();
 
 password.WithParentRelationship(neo4j);
+
+var chuckApi = builder.AddExternalService("chuckapi", "https://api.chucknorris.io")
+    .WithHttpHealthCheck("/");
 
 var adminKey = builder.AddParameter("adminkey", secret: true)
     .WithCustomInput(x => new()
@@ -25,12 +28,7 @@ var adminKey = builder.AddParameter("adminkey", secret: true)
         Required = true
     });
 
-var chuckApi = builder.AddExternalService("chuckapi", "https://api.chucknorris.io")
-    .WithHttpHealthCheck("/");
-
 var apiService = builder.AddProject<Projects.AspireDemo_ApiService>("apiservice", "https")
-    .WithHttpHealthCheck("/health")
-    .WithEndpointsInEnvironment(x => x.UriScheme == "https")
     .WithEnvironment("ADMIN_KEY", adminKey)
     .WithHttpCommand(path: "/admin/seed",
         displayName: "Seed",
@@ -47,8 +45,11 @@ var apiService = builder.AddProject<Projects.AspireDemo_ApiService>("apiservice"
                 );
             }
         })
+    .WithEndpointsInEnvironment(x => x.UriScheme == "https")
+    .WithHttpHealthCheck("/health")
     .WithReference(neo4j)
-    .WithReference(chuckApi);
+    .WithReference(chuckApi)
+    .WaitFor(neo4j);
 
 adminKey.WithParentRelationship(apiService);
 

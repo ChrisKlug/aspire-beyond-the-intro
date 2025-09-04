@@ -7,22 +7,21 @@
         <TargetFramework>net9.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <UserSecretsId>0cc9c0ff-90a6-4a2c-912c-6d33cff26465</UserSecretsId>
+        <UserSecretsId>1ead9864-df14-4d71-aaf2-aeeeaaa8c91a</UserSecretsId>
     </PropertyGroup>
 
     <ItemGroup>
         <ProjectReference Include="..\AspireDemo.ApiService\AspireDemo.ApiService.csproj"/>
-        <ProjectReference Include="..\AspireDemo.Extensions\AspireDemo.Extensions.csproj"
-                            IsAspireProjectResource="false"/>
+        <ProjectReference Include="..\AspireDemo.Extensions\AspireDemo.Extensions.csproj" IsAspireProjectResource="false" />
         <ProjectReference Include="..\AspireDemo.Web\AspireDemo.Web.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
         <PackageReference Include="Aspire.Hosting.AppHost" Version="9.4.1"/>
     </ItemGroup>
-    
+
     <PropertyGroup>
-        <NoWarn>ASPIREINTERACTION001;</NoWarn>
+        <NoWarn>ASPIREINTERACTION001;ASPIRECOMPUTE001;ASPIREPUBLISHERS001;</NoWarn>
     </PropertyGroup>
 
 </Project>

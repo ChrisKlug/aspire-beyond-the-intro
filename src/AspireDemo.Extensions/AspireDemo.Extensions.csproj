@@ -7,11 +7,12 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="Aspire.Hosting" Version="9.4.1" />
+      <PackageReference Include="Aspire.Hosting" Version="9.4.2" />
       <PackageReference Include="Neo4j.Driver" Version="5.28.3" />
     </ItemGroup>
 
     <PropertyGroup>
-        <NoWarn>ASPIREINTERACTION001;ASPIRECOMPUTE001;ASPIREPUBLISHERS001</NoWarn>
+        <NoWarn>ASPIREINTERACTION001;ASPIRECOMPUTE001;ASPIREPUBLISHERS001;</NoWarn>
     </PropertyGroup>
+
 </Project>

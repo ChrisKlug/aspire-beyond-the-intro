@@ -52,7 +52,7 @@ public static class Neo4jResourceExtensions
                 await driver.ExecutableQuery("CREATE (:User {name:'Erica'})").ExecuteAsync();
                 await driver.ExecutableQuery("CREATE (:User {name:'John'})").ExecuteAsync();
                 await driver.ExecutableQuery("CREATE (:User {name:'Lisa'})").ExecuteAsync();
-                
+
                 var interactionService = context.ServiceProvider.GetRequiredService<IInteractionService>();
                 if (interactionService.IsAvailable)
                 {

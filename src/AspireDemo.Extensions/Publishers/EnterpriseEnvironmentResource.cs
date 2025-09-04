@@ -8,8 +8,7 @@ namespace AspireDemo.Extensions.Publishers;
 public class EnterpriseEnvironmentResource
     : Resource, IComputeEnvironmentResource
 {
-    public EnterpriseEnvironmentResource(string name)
-        : base(name)
+    public EnterpriseEnvironmentResource(string name) : base(name)
     {
         Annotations.Add(new PublishingCallbackAnnotation(PublishAsync));
     }

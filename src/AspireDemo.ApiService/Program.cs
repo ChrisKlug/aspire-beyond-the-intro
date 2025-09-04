@@ -70,7 +70,6 @@ if (Environment.GetEnvironmentVariable("ADMIN_KEY") is not null)
         {
             return Results.NotFound();
         }
-        
         await using var driver = GetDriver();
         await driver.ExecutableQuery("MATCH (n) DETACH DELETE n").ExecuteAsync();
         await driver.ExecutableQuery("CREATE (:User {name:'Chris'})").ExecuteAsync();

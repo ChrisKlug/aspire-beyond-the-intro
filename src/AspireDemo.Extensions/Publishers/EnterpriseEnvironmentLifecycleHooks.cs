@@ -10,12 +10,16 @@ public class EnterpriseEnvironmentLifecycleHooks(DistributedApplicationExecution
 {
     public Task BeforeStartAsync(DistributedApplicationModel appModel, CancellationToken cancellationToken = default)
     {
-        if (executionContext.IsRunMode)
+        if (!executionContext.IsPublishMode)
         {
             return Task.CompletedTask;
         }
 
-        var enterpriseEnvironment = appModel.Resources.OfType<EnterpriseEnvironmentResource>().First();
+        var enterpriseEnvironment = appModel.Resources.OfType<EnterpriseEnvironmentResource>().FirstOrDefault();
+        if (enterpriseEnvironment is null)
+        {
+            return Task.CompletedTask;
+        }
 
         foreach (var r in appModel.GetComputeResources())
         {
@@ -31,7 +35,7 @@ public class EnterpriseEnvironmentLifecycleHooks(DistributedApplicationExecution
                 ComputeEnvironment = enterpriseEnvironment
             });
         }
-
+        
         return Task.CompletedTask;
     }
 }
