@@ -94,6 +94,7 @@ public class EnterpriseEnvironmentResource
 
         await using (var step = await context.ActivityReporter.CreateStepAsync("\"Send\" e-mail"))
         {
+            Directory.CreateDirectory(context.OutputPath);
             var filename = Path.Combine(context.OutputPath, "email.txt");
             await File.WriteAllTextAsync(filename, contentBuilder.Build(), Encoding.UTF8);
             await step.SucceedAsync("E-mail content written to " + filename);
