@@ -24,9 +24,11 @@ public static class Neo4jResourceExtensions
             displayName: "Seed Database",
             commandOptions: new()
             {
-                UpdateState = context => context.ResourceSnapshot.HealthStatus is HealthStatus.Healthy
-                    ? ResourceCommandState.Enabled
-                    : ResourceCommandState.Disabled,
+                UpdateState = ctx =>
+                    ctx.ResourceSnapshot.HealthStatus is HealthStatus
+                        .Healthy
+                        ? ResourceCommandState.Enabled
+                        : ResourceCommandState.Disabled,
                 IconName = "ArchiveArrowBack",
                 IconVariant = IconVariant.Filled,
                 ConfirmationMessage = "Are you sure you want to seed the database?"
@@ -58,7 +60,7 @@ public static class Neo4jResourceExtensions
                 {
                     _ = interactionService.PromptNotificationAsync(
                         title: "Database Seed Complete",
-                        message: "Database has not been seeded with 4 users…",
+                        message: "Database has been seeded with 4 users…",
                         options: new NotificationInteractionOptions
                         {
                             Intent = MessageIntent.Information

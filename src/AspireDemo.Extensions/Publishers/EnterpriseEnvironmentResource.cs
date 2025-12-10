@@ -1,7 +1,8 @@
 using System.Text;
+using Aspire.Hosting;
 using Aspire.Hosting.ApplicationModel;
-using Aspire.Hosting.Publishing;
-using AspireDemo.AppHost.Publishers;
+using Aspire.Hosting.Pipelines;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace AspireDemo.Extensions.Publishers;
 
@@ -10,94 +11,105 @@ public class EnterpriseEnvironmentResource
 {
     public EnterpriseEnvironmentResource(string name) : base(name)
     {
-        Annotations.Add(new PublishingCallbackAnnotation(PublishAsync));
+        Annotations.Add(new PipelineStepAnnotation(async (factoryContext) =>
+        {
+            var steps = new List<PipelineStep>();
+            steps.Add(new PipelineStep
+            {
+                Name = $"publish-{Name}",
+                Action = PublishAsync,
+                Tags = ["publish-environment"],
+                RequiredBySteps = [WellKnownPipelineSteps.Publish],
+            });
+
+            var resources = factoryContext.PipelineContext.Model.GetComputeResources();
+            foreach (var resource in resources)
+            {
+                var deploymentTarget = resource.GetDeploymentTargetAnnotation(this)?.DeploymentTarget;
+                if (deploymentTarget is null)
+                {
+                    continue;
+                }
+
+                if (deploymentTarget.TryGetAnnotationsOfType<PipelineStepAnnotation>(out var annotations))
+                {
+                    foreach (var annotation in annotations)
+                    {
+                        var childFactoryContext = new PipelineStepFactoryContext
+                        {
+                            PipelineContext = factoryContext.PipelineContext,
+                            Resource = deploymentTarget
+                        };
+
+                        var deploymentTargetSteps = (await annotation.CreateStepsAsync(childFactoryContext)).ToArray();
+                        foreach (var step in deploymentTargetSteps)
+                        {
+                            step.Resource ??= deploymentTarget;
+                        }
+
+                        steps.AddRange(deploymentTargetSteps);
+                    }
+                }
+            }
+
+            return steps;
+        }));
+
+        Annotations.Add(new PipelineConfigurationAnnotation(context =>
+        {
+            var resources = context.Model.GetComputeResources().ToList();
+            resources.AddRange(context.Model.Resources.OfType<ExternalServiceResource>());
+
+            foreach (var resource in resources)
+            {
+                var deploymentTarget = resource.GetDeploymentTargetAnnotation(this)?.DeploymentTarget;
+                if (deploymentTarget is null)
+                {
+                    continue;
+                }
+
+                var notificationSteps = context.GetSteps(deploymentTarget, "notification");
+                var publishStep = context.GetSteps(this, "publish-environment");
+                publishStep.DependsOn(notificationSteps);
+            }
+        }));
     }
 
-    private async Task PublishAsync(PublishingContext context)
+    private Task PublishAsync(PipelineStepContext context)
     {
-        if (!context.ExecutionContext.IsPublishMode)
-        {
-            return;
-        }
-
-        var projectResources = context.Model.Resources
-            .Select(x => x.GetDeploymentTargetAnnotation(this)?.DeploymentTarget)
-            .OfType<EnterpriseProjectResource>().ToArray();
-
-        var containerResources = context.Model.Resources
-            .Select(x => x.GetDeploymentTargetAnnotation(this)?.DeploymentTarget)
-            .OfType<EnterpriseContainerResource>().ToArray();
-
         var contentBuilder = new EmailContentBuilder();
 
-        await using (var step = await context.ActivityReporter.CreateStepAsync("Compose e-mail"))
+        var recipient = Annotations.OfType<RecipientAnnotation>().FirstOrDefault();
+        contentBuilder.AddGreeting(recipient?.Name);
+
+        var environment = context.Model.Resources.OfType<EnterpriseEnvironmentResource>().First();
+
+        var projectResources = environment.ResourceMapping.Values.OfType<EnterpriseProjectResource>().ToArray();
+        var containerResources = environment.ResourceMapping.Values.OfType<EnterpriseContainerResource>().ToArray();
+        var externalResources = environment.ResourceMapping.Values.OfType<EnterpriseExternalResource>().ToArray();
+        
+        foreach (var resource in projectResources)
         {
-            EnterpriseEnvironmentRecipientAnnotation? recipient = null;
-            await using (var task = await step.CreateTaskAsync("Get recipient"))
-            {
-                recipient = Annotations.OfType<EnterpriseEnvironmentRecipientAnnotation>().FirstOrDefault();
-                if (recipient == null)
-                    await task.SucceedAsync("No recipient added!");
-                else
-                    await task.SucceedAsync($"Recipient found! ({recipient.Name} <{recipient.Email}>)");
-            }
-
-            await using (var task = await step.CreateTaskAsync(
-                             "Add friendly greeting. Don't want to upset the recipient..."))
-            {
-                contentBuilder.AddGreeting(recipient?.Name);
-                await task.SucceedAsync("Friendly greeting added!");
-            }
-
-            if (projectResources.Any())
-            {
-                await using (var task = await step.CreateTaskAsync("Adding required IIS apps to e-mail."))
-                {
-                    foreach (var resource in projectResources)
-                    {
-                        contentBuilder.AddResource(resource);
-                    }
-
-                    await task.SucceedAsync($"{projectResources.Length} apps added.");
-                }
-            }
-
-            if (containerResources.Any())
-            {
-                await using (var task = await step.CreateTaskAsync("Adding required containers to e-mail."))
-                {
-                    foreach (var resource in containerResources)
-                    {
-                        contentBuilder.AddResource(resource);
-                    }
-
-                    await task.SucceedAsync($"{containerResources.Length} containers added.");
-                }
-            }
-
-            EnterpriseEnvironmentSenderAnnotation? sender = null;
-            await using (var task = await step.CreateTaskAsync("Get sender"))
-            {
-                sender = Annotations.OfType<EnterpriseEnvironmentSenderAnnotation>().FirstOrDefault();
-                if (sender == null)
-                    await task.SucceedAsync("No sender added!");
-                else
-                    await task.SucceedAsync($"Sender found! ({sender.Name})");
-            }
-
-            await using (var task = await step.CreateTaskAsync("Add signature"))
-            {
-                contentBuilder.AddSignature(sender?.Name);
-                await task.SucceedAsync("Signature added!").ConfigureAwait(false);
-            }
+            contentBuilder.AddResource(resource);
         }
 
-        await using (var step = await context.ActivityReporter.CreateStepAsync("\"Send\" e-mail"))
+        foreach (var resource in containerResources)
         {
-            Directory.CreateDirectory(context.OutputPath);
-            var filename = Path.Combine(context.OutputPath, "email.txt");
-            await File.WriteAllTextAsync(filename, contentBuilder.Build(), Encoding.UTF8);
-            await step.SucceedAsync("E-mail content written to " + filename);
+            contentBuilder.AddResource(resource);
         }
+
+        contentBuilder.AddExternalResource(externalResources);
+
+        var sender = Annotations.OfType<SenderAnnotation>().FirstOrDefault();
+        contentBuilder.AddSignature(sender?.Name);
+
+        var outputService = context.Services.GetRequiredService<IPipelineOutputService>();
+        var outputPath = outputService.GetOutputDirectory();
+        Directory.CreateDirectory(outputPath);
+        var outputFile = Path.Combine(outputPath, "email.txt");
+
+        return File.WriteAllTextAsync(outputFile, contentBuilder.Build(), Encoding.UTF8);
     }
+
+    internal Dictionary<IResource, EnterpriseServiceResource> ResourceMapping { get; } = new();
 }

@@ -23,22 +23,23 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
-string[] summaries =
-    ["Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"];
+string[] summaries = ["Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"];
+
+app.MapGet("/", () => "API service is running. Navigate to /weatherforecast to see sample data.");
 
 app.MapGet("/weatherforecast", () =>
-    {
-        var forecast = Enumerable.Range(1, 5).Select(index =>
-                new WeatherForecast
-                (
-                    DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-                    Random.Shared.Next(-20, 55),
-                    summaries[Random.Shared.Next(summaries.Length)]
-                ))
-            .ToArray();
-        return forecast;
-    })
-    .WithName("GetWeatherForecast");
+{
+    var forecast = Enumerable.Range(1, 5).Select(index =>
+        new WeatherForecast
+        (
+            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
+            Random.Shared.Next(-20, 55),
+            summaries[Random.Shared.Next(summaries.Length)]
+        ))
+        .ToArray();
+    return forecast;
+})
+.WithName("GetWeatherForecast");
 
 IDriver GetDriver()
 {
@@ -70,12 +71,13 @@ if (Environment.GetEnvironmentVariable("ADMIN_KEY") is not null)
         {
             return Results.NotFound();
         }
+
         await using var driver = GetDriver();
         await driver.ExecutableQuery("MATCH (n) DETACH DELETE n").ExecuteAsync();
-        await driver.ExecutableQuery("CREATE (:User {name:'Chris'})").ExecuteAsync();
-        await driver.ExecutableQuery("CREATE (:User {name:'Erica'})").ExecuteAsync();
-        await driver.ExecutableQuery("CREATE (:User {name:'John'})").ExecuteAsync();
-        await driver.ExecutableQuery("CREATE (:User {name:'Lisa'})").ExecuteAsync();
+        await driver.ExecutableQuery("CREATE (:User {name:'Ray'})").ExecuteAsync();
+        await driver.ExecutableQuery("CREATE (:User {name:'Linda'})").ExecuteAsync();
+        await driver.ExecutableQuery("CREATE (:User {name:'Shay'})").ExecuteAsync();
+        await driver.ExecutableQuery("CREATE (:User {name:'Sara'})").ExecuteAsync();
 
         return Results.Ok();
     });
@@ -85,14 +87,15 @@ app.MapGet("/chuck-quote", async (IHttpClientFactory clientFactory) =>
 {
     var client = clientFactory.CreateClient();
     var quote = await client.GetFromJsonAsync<ChuckQuoteData>("https://chuckapi/jokes/random");
-    return quote.Value;
+    return quote!.Value;
 });
+
 
 app.MapDefaultEndpoints();
 
 app.Run();
 
-public record ChuckQuoteData(string Id, string IconUrl, string Url, string Value);
+record ChuckQuoteData(string Id, string IconUrl, string Url, string Value);
 record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
 {
     public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);

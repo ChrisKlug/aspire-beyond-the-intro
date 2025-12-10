@@ -1,7 +1,7 @@
-# Demo code for my ".NET Aspire Beyond the Introduction" presentation
+# Demo code for my "Aspire Beyond the Introduction" presentation
 
 This repo contains the source code for the demo used in my 
-".NET Aspire Beyond the Introduction" presentation. If you haven't 
+"Aspire Beyond the Introduction" presentation. If you haven't 
 seen the talk, the code might not be as useful... 
 
 # Contact

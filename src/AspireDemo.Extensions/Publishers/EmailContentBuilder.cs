@@ -1,6 +1,5 @@
 using System.Text;
 using Aspire.Hosting.ApplicationModel;
-using AspireDemo.AppHost.Publishers;
 
 namespace AspireDemo.Extensions.Publishers;
 
@@ -12,7 +11,7 @@ internal class EmailContentBuilder
 
     public EmailContentBuilder AddGreeting(string? name)
     {
-        contents = new StringBuilder(@$"Dear {name ?? "IT-person"}!
+        contents.Append(@$"Dear {name ?? "IT-person"}!
 We need to deploy our solution, and because of this, we need some stuff from you...
 
 Here are the specifics...
@@ -52,13 +51,27 @@ Here are the specifics...
         contents.AppendLine($" - {resource.Name} ({image!.Registry}/{image!.Image}:{image!.Tag})");
         foreach (var port in resource.GetPorts())
         {
-            contents.AppendLine($"   - Port: {port}");
+            contents.AppendLine($"   - {port.Scheme}: {port.ExposedPort}");
         }
 
-        foreach (var mount in resource.GetMounts())
+        foreach (var mount in resource.GetVolumes())
         {
-            contents.AppendLine($"   - Mount: {mount.Target}{(mount.IsReadOnly ? " (as read only)" : "")}");
+            contents.AppendLine($"   - Mount: {mount.Target}{(mount.ReadOnly ? " (as read only)" : "")}");
         }
+
+        return this;
+    }
+
+    public EmailContentBuilder AddExternalResource(EnterpriseExternalResource[] resources)
+    {
+        if (resources.Length == 0)
+            return this;
+
+        contents.AppendLine(
+            $"\r\nWe also need to make sure that the firewall allows us to talk to:");
+
+        foreach (var resource in resources)
+            contents.AppendLine($" - {resource.Uri}");
 
         return this;
     }
