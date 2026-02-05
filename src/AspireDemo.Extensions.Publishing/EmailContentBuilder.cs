@@ -1,7 +1,7 @@
 using System.Text;
 using Aspire.Hosting.ApplicationModel;
 
-namespace AspireDemo.Extensions.Publishers;
+namespace AspireDemo.Extensions.Publishing;
 
 internal class EmailContentBuilder
 {

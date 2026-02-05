@@ -1,6 +1,6 @@
 using Aspire.Hosting.ApplicationModel;
 
-namespace AspireDemo.Extensions.Publishers;
+namespace AspireDemo.Extensions.Publishing;
 
 public class RecipientAnnotation(string name, string email) : IResourceAnnotation
 {

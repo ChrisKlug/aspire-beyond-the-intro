@@ -3,7 +3,7 @@ using Aspire.Hosting.ApplicationModel;
 using Aspire.Hosting.Eventing;
 using Aspire.Hosting.Lifecycle;
 
-namespace AspireDemo.Extensions.Publishers;
+namespace AspireDemo.Extensions.Publishing;
 
 public class EnterpriseEnvironmentEventSubscriber
     : IDistributedApplicationEventingSubscriber

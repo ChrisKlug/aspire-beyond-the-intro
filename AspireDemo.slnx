@@ -1,7 +1,9 @@
 <Solution>
   <Project Path="src/AspireDemo.ApiService/AspireDemo.ApiService.csproj" />
   <Project Path="src/AspireDemo.AppHost/AspireDemo.AppHost.csproj" />
-  <Project Path="src/AspireDemo.Extensions/AspireDemo.Extensions.csproj" />
+  <Project Path="src/AspireDemo.Extensions.ConditionalActivation/AspireDemo.Extensions.ConditionalActivation.csproj" />
+  <Project Path="src/AspireDemo.Extensions.Neo4j/AspireDemo.Extensions.Neo4j.csproj" />
+  <Project Path="src/AspireDemo.Extensions.Publishing/AspireDemo.Extensions.Publishing.csproj" />
   <Project Path="src/AspireDemo.ServiceDefaults/AspireDemo.ServiceDefaults.csproj" />
   <Project Path="src/AspireDemo.Web/AspireDemo.Web.csproj" />
 </Solution>

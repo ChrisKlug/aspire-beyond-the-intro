@@ -1,17 +1,15 @@
 using Aspire.Hosting;
 using Aspire.Hosting.ApplicationModel;
-using Aspire.Hosting.Lifecycle;
-using AspireDemo.Extensions.Neo4j;
-using AspireDemo.Extensions.Publishers;
 
-namespace AspireDemo.Extensions;
+namespace AspireDemo.Extensions.Neo4j;
 
 public static class DistributedApplicationExtensions
 {
     public static IResourceBuilder<Neo4jResource> AddNeo4j(
         this IDistributedApplicationBuilder builder, 
         string name,
-        ParameterResource? password = null)
+        ParameterResource? password = null
+    )
     {
         var neo4jResource = new Neo4jResource(name, password);
 
@@ -29,26 +27,5 @@ public static class DistributedApplicationExtensions
                 x.DisplayText = "Admin UI";
             })
             .WithUrlForEndpoint(Neo4jResource.BoltEndpointName, x => { x.DisplayLocation = UrlDisplayLocation.DetailsOnly; });
-    }
-
-    public static IResourceBuilder<EnterpriseEnvironmentResource> AddEnterpriseEnvironment(
-            this IDistributedApplicationBuilder builder,
-            string name)
-    {
-        ArgumentNullException.ThrowIfNull(builder);
-        ArgumentException.ThrowIfNullOrEmpty(name);
-
-        var resource = new EnterpriseEnvironmentResource(name);
-
-        if (builder.ExecutionContext.IsRunMode)
-        {
-            // Return a builder that isn't added to the top-level application builder
-            // so it doesn't surface as a resource.
-            return builder.CreateResourceBuilder(resource);
-        }
-
-        builder.Services.TryAddEventingSubscriber<EnterpriseEnvironmentEventSubscriber>();
-
-        return builder.AddResource(resource);
     }
 }

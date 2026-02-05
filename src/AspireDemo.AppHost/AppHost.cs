@@ -1,6 +1,6 @@
-using AspireDemo.Extensions;
+using AspireDemo.Extensions.ConditionalActivation;
 using AspireDemo.Extensions.Neo4j;
-using AspireDemo.Extensions.Publishers;
+using AspireDemo.Extensions.Publishing;
 
 var builder = DistributedApplication.CreateBuilder(args);
 
@@ -51,7 +51,8 @@ var apiService = builder.AddProject<Projects.AspireDemo_ApiService>("apiservice"
         })
     .WithReference(neo4j)
     .WaitFor(neo4j)
-    .WithReference(chuckApi);
+    .WithReference(chuckApi)
+    .WithConditionalActivation("ALl", "NoFrontEnd");
 
 adminKey.WithParentRelationship(apiService);
 
@@ -60,6 +61,15 @@ builder.AddProject<Projects.AspireDemo_Web>("webfrontend", "https")
     .WithEndpointsInEnvironment(x => x.UriScheme == "https")
     .WithHttpHealthCheck("/health")
     .WithReference(apiService)
-    .WaitFor(apiService);
+    .WaitFor(apiService)
+    .WithConditionalActivation("All");
+
+if (Environment.GetEnvironmentVariable("APPLICATION_ACTIVATION_CATEGORIES") is not null)
+{
+    builder.UseConditionalResourceActivation(
+        Environment.GetEnvironmentVariable("APPLICATION_ACTIVATION_CATEGORIES")!
+            .Split(",", StringSplitOptions.TrimEntries)
+    );
+}
 
 builder.Build().Run();

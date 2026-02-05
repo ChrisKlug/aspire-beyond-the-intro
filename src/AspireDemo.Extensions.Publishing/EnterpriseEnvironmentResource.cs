@@ -4,7 +4,7 @@ using Aspire.Hosting.ApplicationModel;
 using Aspire.Hosting.Pipelines;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace AspireDemo.Extensions.Publishers;
+namespace AspireDemo.Extensions.Publishing;
 
 public class EnterpriseEnvironmentResource
     : Resource, IComputeEnvironmentResource

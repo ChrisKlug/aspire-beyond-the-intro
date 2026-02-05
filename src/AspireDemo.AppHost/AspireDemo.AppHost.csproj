@@ -10,7 +10,12 @@
 
     <ItemGroup>
         <ProjectReference Include="..\AspireDemo.ApiService\AspireDemo.ApiService.csproj"/>
-        <ProjectReference Include="..\AspireDemo.Extensions\AspireDemo.Extensions.csproj" IsAspireProjectResource="false" />
+        <ProjectReference Include="..\AspireDemo.Extensions.ConditionalActivation\AspireDemo.Extensions.ConditionalActivation.csproj"
+                          IsAspireProjectResource="false" />
+        <ProjectReference Include="..\AspireDemo.Extensions.Neo4j\AspireDemo.Extensions.Neo4j.csproj"
+                          IsAspireProjectResource="false"/>
+        <ProjectReference Include="..\AspireDemo.Extensions.Publishing\AspireDemo.Extensions.Publishing.csproj"
+                          IsAspireProjectResource="false"  />
         <ProjectReference Include="..\AspireDemo.Web\AspireDemo.Web.csproj"/>
     </ItemGroup>
 

@@ -7,8 +7,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="Aspire.Hosting" Version="13.0.2" />
-      <PackageReference Include="Neo4j.Driver" Version="5.28.4" />
+      <PackageReference Include="Aspire.Hosting" Version="13.1.0" />
+      <PackageReference Include="Neo4j.Driver" Version="6.0.0" />
     </ItemGroup>
 
     <PropertyGroup>

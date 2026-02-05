@@ -1,6 +1,6 @@
 using Aspire.Hosting.ApplicationModel;
 
-namespace AspireDemo.Extensions.Publishers;
+namespace AspireDemo.Extensions.Publishing;
 
 public static class EnterpriseEnvironmentExtensions
 {
