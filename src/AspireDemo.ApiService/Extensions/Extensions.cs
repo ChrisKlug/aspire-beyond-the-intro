@@ -7,13 +7,9 @@ public static class Extensions
 {   
     public static WebApplicationBuilder AddNeo4jDriver(
         this WebApplicationBuilder builder, 
-        string? connectionStringName = null
+        string connectionStringName
     )
     {
-        if (connectionStringName is null)
-        {
-            return builder;
-        }
         var connstring = new System.Data.Common.DbConnectionStringBuilder
         {
             ConnectionString = builder.Configuration.GetConnectionString(connectionStringName)!
