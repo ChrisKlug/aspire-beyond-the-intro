@@ -1,0 +1,13 @@
+<Project>
+    <PropertyGroup>
+        <NoWarn>
+            $(NoWarn);
+            ASPIREBROWSERLOGS001;
+            ASPIREDOTNETPROJECT001;
+            ASPIRETERMINAL001;
+            ASPIRECERTIFICATES001;
+            ASPIREINTERACTION001;
+            ASPIREPROCESSCOMMAND001
+        </NoWarn>
+    </PropertyGroup>
+</Project>

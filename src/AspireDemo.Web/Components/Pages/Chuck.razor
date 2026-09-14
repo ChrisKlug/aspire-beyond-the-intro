@@ -1,0 +1,35 @@
+﻿@page "/chuck"
+@using AspireDemo.Web.ApiClients
+@attribute [StreamRendering(true)]
+
+@inject ChuckQuotesClient ChuckQuotesClient
+
+<PageTitle>Chuck Quote</PageTitle>
+
+<h1>Chuck Quote</h1>
+
+@if (quote == null && error == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <p>@(quote ?? error)</p>
+}
+
+@code {
+    private string? quote;
+    private string? error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            quote = await ChuckQuotesClient.GetQuoteAsync();
+        }
+        catch
+        {
+            error = "Ooops! Something went wrong while fetching the quote.";
+        }
+    }
+}

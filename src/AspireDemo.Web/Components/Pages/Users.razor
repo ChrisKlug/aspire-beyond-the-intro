@@ -1,0 +1,49 @@
+﻿@page "/users"
+@using AspireDemo.Web.ApiClients
+@attribute [StreamRendering(true)]
+
+@inject UsersClient UsersClient
+
+<PageTitle>Users</PageTitle>
+
+<h1>Users</h1>
+
+@if (users == null && error == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <p>@if (users is not null && users.Length > 0)
+    {
+        foreach (var user in users)
+        {
+            <span>@user</span><br />
+        }
+    }
+    else if (users is not null && users.Length == 0)
+    {
+        <span>No users found.</span>
+    }
+    else
+    {
+        <span>@error</span>
+    }</p>
+}
+
+@code {
+    private string[]? users;
+    private string? error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            users = await UsersClient.GetUsersAsync();
+        }
+        catch
+        {
+            error = "Ooops! Something went wrong while fetching the users.";
+        }
+    }
+}

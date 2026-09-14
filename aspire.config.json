@@ -1,0 +1,8 @@
+{
+  "appHost": {
+    "path": "src/AspireDemo.AppHost/AspireDemo.AppHost.csproj"
+  },
+  "features": {
+    "defaultWatchEnabled": "false"
+  }
+}
