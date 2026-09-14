@@ -6,13 +6,19 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AspireUseCliBundle>true</AspireUseCliBundle>
-    <UserSecretsId>7f385439-24cb-4bfd-9899-c53a22d7d9a1</UserSecretsId>
     <IsAspireProjectResource>False</IsAspireProjectResource>
+    <UserSecretsId>ab342ad8-9cc7-4e3f-87c5-41b45e204968</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\AspireDemo.ApiService\AspireDemo.ApiService.csproj" />
-    <ProjectReference Include="..\AspireDemo.Web\AspireDemo.Web.csproj" />
+    <ProjectReference Include="..\AspireDemo.ApiService\AspireDemo.ApiService.csproj" AspireProjectMetadataTypeName="Api" />
+    <ProjectReference Include="..\AspireDemo.AppHost.Extensions\AspireDemo.AppHost.Extensions.csproj" IsAspireProjectResource="False" />
+    <ProjectReference Include="..\AspireDemo.Web\AspireDemo.Web.csproj" AspireProjectMetadataTypeName="Web" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Aspire.Hosting.DevTunnels" Version="13.5.3" />
+    <PackageReference Include="Aspire.Hosting.Dotnet" Version="13.5.3-preview.1.26425.3" />
   </ItemGroup>
 
 </Project>
