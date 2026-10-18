@@ -11,5 +11,6 @@ ps -ww -o pid=,args= -p "$1" | awk '
     printf "%-6s %-12s %s\n", (first ? pid : ""), (first ? name : ""), arg
     first = 0
   }
+  if (first) printf "%-6s %-12s\n", pid, name
   print "---"
 }'
