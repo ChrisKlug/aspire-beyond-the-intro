@@ -77,13 +77,11 @@ public static class Neo4jExtensions
         var endpoint = builder.Resource.Annotations
             .OfType<EndpointAnnotation>()
             .First(e => e.Name == Neo4jResource.AdminEndpointName);
-        builder.Resource.Annotations.Remove(endpoint);
 
-        builder.WithEndpoint(
-            targetPort: 7473,
-            port: 7473,
-            name: Neo4jResource.AdminEndpointName,
-            scheme: "https");
+        endpoint.Port = 7473;
+        endpoint.TargetPort = 7473;
+        endpoint.TlsEnabled = true;
+        endpoint.UriScheme = "https";
 
         return builder;
     }
