@@ -1,7 +1,10 @@
 using AspireDemo.Web;
+using AspireDemo.Web.ApiClients;
 using AspireDemo.Web.Components;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddApiClient<ChuckQuotesClient>();
 
 // Add service defaults & Aspire client integrations.
 builder.AddServiceDefaults();
