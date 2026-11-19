@@ -7,7 +7,7 @@ namespace AspireDemo.AppHost.Resources;
 public static class Neo4jExtensions
 {
     public static IResourceBuilder<Neo4jResource> AddNeo4j(
-        this IDistributedApplicationBuilder builder, 
+        this IDistributedApplicationBuilder builder,
         string name,
         IResourceBuilder<ParameterResource>? password = null
     )
@@ -27,7 +27,6 @@ public static class Neo4jExtensions
                                        EnableDescriptionMarkdown = true,
                                        Required = true
                                    })
-                                   .WithHidden()
                                    .Resource;
         
         var neo4jResource = new Neo4jResource(name, passwordResource);
@@ -39,6 +38,7 @@ public static class Neo4jExtensions
             .WithEnvironment("NEO4J_AUTH", $"neo4j/{passwordResource}")
             .WithEndpoint(targetPort: 7687, port: 7687, name: Neo4jResource.BoltEndpointName, scheme: "neo4j")
             .WithEndpoint(targetPort: 7474, port: 7474, name: Neo4jResource.AdminEndpointName, scheme: "http")
+            .WithHttpHealthCheck("/", endpointName: Neo4jResource.AdminEndpointName)
             .WithUrlForEndpoint(Neo4jResource.AdminEndpointName, x =>
             {
                 x.DisplayLocation = UrlDisplayLocation.SummaryAndDetails;
@@ -70,8 +70,6 @@ public static class Neo4jExtensions
             ctx.EnvironmentVariables["NEO4J_dbms_ssl_policy_https_public__certificate"] = Path.GetFileName(certPath)!;
             ctx.EnvironmentVariables["NEO4J_dbms_ssl_policy_https_private__key"] = Path.GetFileName(keyPath)!;
             ctx.EnvironmentVariables["NEO4J_dbms_ssl_policy_https_trust__all"] = "true";
-
-            
         });
 
         var endpoint = builder.Resource.Annotations
@@ -93,93 +91,14 @@ public static class Neo4jExtensions
         {
             return builder;
         }
-        
+
         builder.WithCommand(
             name: "seed-database",
             displayName: "Seed Database",
             executeCommand: async context =>
             {
-                var seedDataService = context.Services.GetService<SeedDataService>();
-                if (seedDataService is null)
-                {
-                    return CommandResults.Failure(
-                        errorMessage: "Data seeding failed",
-                        result: "**SeedDataService** is not registered in the service container.",
-                        resultFormat: CommandResultFormat.Markdown);
-                }
-
-                var dataSource = context.Arguments.GetString("source")!;
-                if (!Enum.TryParse<SeedDataSources>(dataSource, out var dataSourceType))
-                {
-                    return CommandResults.Failure("Data seeding failed", $"Invalid seed data source: {dataSource}");
-                }
-
-                var dataset = context.Arguments.GetString("dataset")!;
-
-                var result = await seedDataService.SeedDatabaseAsync(dataSourceType, dataset);
-                if (!result.Success)
-                {
-                    return CommandResults.Failure("Data seeding failed", result.ErrorMessage!);
-                }
-
-                return CommandResults.Success(
-                    message: "Data seeding succeeded",
-                    result: result.ToJson(),
-                    resultFormat: CommandResultFormat.Json,
-                    displayImmediately: true);
-            },
-            commandOptions: new CommandOptions
-            {
-                IconName = "ArchiveArrowBack",
-                IconVariant = IconVariant.Filled,
-                UpdateState = context =>
-                    context.ResourceSnapshot.HealthStatus is HealthStatus
-                        .Healthy
-                        ? ResourceCommandState.Enabled
-                        : ResourceCommandState.Disabled,
-                Arguments =
-                [
-                    new InteractionInput
-                    {
-                        Name = "source",
-                        Label = "Data Source",
-                        InputType = InputType.Choice,
-                        Options =
-                        [
-                            KeyValuePair.Create(nameof(SeedDataSources.Test), "Test Data"),
-                            KeyValuePair.Create(nameof(SeedDataSources.Comics), "Comics Data")
-                        ],
-                        Required = true
-                    },
-                    new InteractionInput
-                    {
-                        Name = "dataset",
-                        Label = "Dataset",
-                        InputType = InputType.Text,
-                        Required = true
-                    },
-                ],
-                Visibility = ResourceCommandVisibility.Api
-            }
-        );
-
-        return builder;
-    }
-
-    public static IResourceBuilder<Neo4jResource> WithInteractiveDatabaseSeedingCommand(
-        this IResourceBuilder<Neo4jResource> builder)
-    {
-        if (!builder.ApplicationBuilder.ExecutionContext.IsRunMode)
-        {
-            return builder;
-        }
-        
-        builder.WithCommand(
-            name: "seed-database-interactive",
-            displayName: "Seed Database Interactively",
-            executeCommand: async context =>
-            {
-                var seedDataService = context.Services.GetService<SeedDataService>();
+                var seedDataService =
+                    context.Services.GetService<SeedDataService>();
                 if (seedDataService is null)
                 {
                     return CommandResults.Failure(
@@ -222,13 +141,14 @@ public static class Neo4jExtensions
                             Required = true,
                             DynamicLoading = new InputLoadOptions
                             {
+                                AlwaysLoadOnStart = true,
                                 LoadCallback = ctx =>
                                 {
-                                    var source = ctx.AllInputs["source"].Value;
-                                    ctx.Input.Options =
-                                        seedDataService.GetDatasets(Enum.Parse<SeedDataSources>(source!))
-                                            .Select(dataset => KeyValuePair.Create(dataset, dataset))
-                                            .ToList();
+                                    var source = ctx.AllInputs["source"].Value ?? nameof(SeedDataSources.Test);
+                                    ctx.Input.Options = seedDataService
+                                        .GetDatasets(Enum.Parse<SeedDataSources>(source!))
+                                        .Select(dataset => KeyValuePair.Create(dataset, dataset))
+                                        .ToList();
                                     return Task.CompletedTask;
                                 },
                                 DependsOnInputs = ["source"]
@@ -261,19 +181,19 @@ public static class Neo4jExtensions
                 {
                     return CommandResults.Canceled();
                 }
-
+                
                 SeedResult? seedResult = null;
                 var result = await interactionService.PromptProgressAsync(
                     "Seeding database...",
                     new ProgressInteractionOptions
                     {
                         PrimaryButtonText = "Cancel",
-                        Work = async progressContext =>
+                        Work = async ctx =>
                         {
                             seedResult = await seedDataService.SeedDatabaseAsync(
                                 dataSource,
                                 dataset,
-                                progressContext.CancellationToken
+                                ctx.CancellationToken
                             );
                         }
                     },
@@ -300,10 +220,10 @@ public static class Neo4jExtensions
                 IconName = "ArchiveArrowBack",
                 IconVariant = IconVariant.Filled,
                 UpdateState = context =>
-                    context.ResourceSnapshot.HealthStatus is HealthStatus.Healthy
+                    context.ResourceSnapshot.HealthStatus is HealthStatus
+                        .Healthy
                         ? ResourceCommandState.Enabled
-                        : ResourceCommandState.Disabled,
-                Visibility = ResourceCommandVisibility.UI
+                        : ResourceCommandState.Disabled
             }
         );
 

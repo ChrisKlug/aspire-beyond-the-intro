@@ -48,8 +48,9 @@ app.MapGet("/api/chuck-quote", async (IHttpClientFactory httpClientFactory) =>
     return joke?.Value;
 });
 
-app.MapUsersEndpoint();
 app.MapDatabaseSeedingEndpoint();
+
+app.MapUsersEndpoint();
 
 app.MapDefaultEndpoints();
 

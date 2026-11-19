@@ -9,28 +9,20 @@ var builder = DistributedApplication.CreateBuilder(args);
 builder.AddSeedDataService<Neo4jResource>("neo4j");
 
 var neo4j = builder.AddNeo4j("neo4j")
-                    .WithVolumeStorage("mydata")
-                    .WithLifetime(ContainerLifetime.Persistent)
-                    .WithHttpsDeveloperCertificate()
-                    .WithDatabaseSeedingCommand()
-                    .WithInteractiveDatabaseSeedingCommand()
-                    .WithNeo4jIsAwesomeCommand(Voices.BadNews)
-                    .WithNeo4jIsAwesomeCommand(Voices.Alva);
-
-var chuckApi = builder.AddExternalService("chuckapi", "https://api.chucknorris.io");
+    .WithVolumeStorage("mydata")
+    .WithLifetime(ContainerLifetime.Persistent)
+    .WithHttpsDeveloperCertificate()
+    .WithDatabaseSeedingCommand()
+    .WithNeo4jIsAwesomeCommand(Voices.BadNews)
+    .WithNeo4jIsAwesomeCommand(Voices.Alva);
 
 var apiKey = Guid.NewGuid().ToString();
-
-var apiService = builder.AddProject<Projects.Api>("apiservice")
-        .WithEndpointsInEnvironment(x => x.TlsEnabled)
-        .WithEnvironment("API_ADMIN_KEY", apiKey)
+var apiService = builder.AddDotnetProject("apiservice", "../AspireDemo.ApiService")
         .WithHttpHealthCheck("/health")
-        .WithReference(chuckApi)
-        .WithChildRelationship(chuckApi)
         .WithAnnotationDebugging()
-        .WithReference(neo4j)
-        .WaitFor(neo4j)
-        .WithHttpCommand(path: "/admin/seeddatabase",
+        .WithEnvironment("API_ADMIN_KEY", apiKey)
+        .WithHttpCommand(
+            path: "/admin/seeddatabase",
             displayName: "Seed Database",
             commandOptions: new HttpCommandOptions
             {
@@ -47,9 +39,14 @@ var apiService = builder.AddProject<Projects.Api>("apiservice")
                         .Healthy
                         ? ResourceCommandState.Enabled
                         : ResourceCommandState.Disabled
-            });
+            })
+        .WithReference(neo4j)
+        .WaitFor(neo4j);
 
-var frontEnd = builder.AddProject<Projects.Web>("webfrontend", "httpsOnly")
+var frontEnd = builder.AddDotnetProject("webfrontend", "../AspireDemo.Web", options =>
+    {
+        options.LaunchProfileName = "httpsOnly";
+    })
     .WithExternalHttpEndpoints()
     .WithReference(apiService)
     .WaitFor(apiService)
@@ -58,9 +55,6 @@ var frontEnd = builder.AddProject<Projects.Web>("webfrontend", "httpsOnly")
 
 builder.AddDockerfile("games", "../../resources/games")
     .WithTerminal();
-
-builder.AddDotnetProject("external", "../../external/External.Web/External.Web.csproj",
-    options => { options.LaunchProfileName = "https"; });
 
 var tunnel = builder
     .AddDevTunnel("devtunnel", null, new DevTunnelOptions { AllowAnonymous = true })
